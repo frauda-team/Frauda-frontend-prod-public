@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="lv" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="google" content="notranslate">
+<title>Frauda</title>
+<link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+<link rel="manifest" href="assets/favicon/site.webmanifest">
+<!--
+  API Endpoints used by this frontend:
+  - GET data/scenarios.csv         (FraudaData.ready — loads fraud scenarios)
+  - GET data/dashboard_graph.csv   (FraudaData.dashboardReady — loads dashboard data, fallback: derived from scenarios.csv)
+  No backend API server — all data is local CSV.
+  Auth is browser-only (localStorage) — PROTOTYPE/TESTING ONLY.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Persistent top navbar — rendered dynamically by router.js -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation"></nav>
+
+<!-- Mobile menu backdrop -->
+<div class="nav-mobile-backdrop" id="mobileBackdrop"></div>
+
+<!-- Mobile menu drawer -->
+<div class="nav-mobile-menu" id="mobileMenu"></div>
+
+<!-- SPA content root -->
+<main id="app" role="main"></main>
+
+<!-- Modals container -->
+<div id="modals"></div>
+
+<!-- Tooltip (for dashboard charts) -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Core data layer (untouched) -->
+<script src="js/data.js"></script>
+<!-- Internationalization -->
+<script src="js/i18n.js"></script>
+<!-- Auth, theme, storage shell -->
+<script src="js/product-shell.js"></script>
+<!-- Page modules -->
+<script src="js/pages/landing.js"></script>
+<script src="js/pages/verify.js"></script>
+<script src="js/pages/dashboard-page.js"></script>
+<script src="js/pages/profile.js"></script>
+<!-- SPA Router (must be last) -->
+<script src="js/router.js"></script>
+</body>
+</html>

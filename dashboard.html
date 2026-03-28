@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Frauda — Banku izlūkdatu panelis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<header class="navbar">
+  <div class="nav-left">
+    <img src="assets/logo.jpg" class="nav-logo" alt="Frauda logo" translate="no">
+    <span class="nav-brand" translate="no">Frauda</span>
+    <div class="nav-sep"></div>
+    <span class="nav-sub" data-i18n="dashboard.nav.subtitle">Banku izlūkdatu panelis</span>
+  </div>
+  <div class="nav-right">
+    <a href="index.html" class="nav-page-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span data-i18n="dashboard.nav.link.tool">Pārbaudes rīks</span>
+    </a>
+    <div class="live-badge"><div class="live-dot"></div><span data-i18n="common.data.connected">Dati savienoti</span></div>
+    <span class="nav-ts" id="lastSync" translate="no"></span>
+    <button id="btnLang" class="lang-btn" onclick="toggleLang()">EN</button>
+    <button id="btnTheme" class="theme-btn" type="button">
+      <span class="theme-icon" id="themeIcon" aria-hidden="true">◐</span>
+      <span data-i18n="common.theme.toggle">Tēma</span>
+    </button>
+    <button id="btnLogout" class="btn btn-ghost nav-logout" type="button" data-i18n="common.auth.logout">Izrakstīties</button>
+    <span class="nav-user" id="navbarUser" translate="no">guest</span>
+  </div>
+</header>
+
+<!-- ── Page ───────────────────────────────────────────────────────────── -->
+<main class="page">
+
+  <!-- ── Filters ──────────────────────────────────────────────────────── -->
+  <div class="filter-bar">
+    <span class="filter-label" data-i18n="dashboard.filter.label">Filtri</span>
+    <div class="filter-sep"></div>
+    <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)">
+      <span data-i18n="dashboard.filter.date">Datums</span>
+      <input type="date" id="fDate">
+    </label>
+    <select id="fAge">
+      <option value="all" data-i18n="dashboard.filter.age.all">Visas vecuma grupas</option>
+      <option value="18–24">18–24</option><option value="25–34">25–34</option><option value="35–49">35–49</option>
+      <option value="50–64">50–64</option><option value="65+">65+</option>
+    </select>
+    <select id="fGender">
+      <option value="all" data-i18n="dashboard.filter.gender.all">Visi dzimumi</option>
+      <option value="male" data-i18n="dashboard.filter.gender.male">Vīrietis</option><option value="female" data-i18n="dashboard.filter.gender.female">Sieviete</option>
+    </select>
+    <select id="fType">
+      <option value="all" data-i18n="dashboard.filter.type.all">Visi krāpniecības veidi</option>
+      <option value="bank_impersonation" data-i18n="dashboard.filter.type.bank">Bankas uzdošanās</option><option value="government_impersonation" data-i18n="dashboard.filter.type.gov">VID / valsts drauds</option>
+      <option value="otp_theft" data-i18n="dashboard.filter.type.otp">OTP iegūšana</option><option value="delivery_fraud" data-i18n="dashboard.filter.type.delivery">Piegādes maksa</option>
+      <option value="investment_scam" data-i18n="dashboard.filter.type.investment">Investīciju krāpniecība</option><option value="utility_fraud" data-i18n="dashboard.filter.type.utility">Komunālie pakalpojumi</option>
+      <option value="phishing_link" data-i18n="dashboard.filter.type.phishing">Phishing saite</option>
+      <option value="legitimate" data-i18n="dashboard.filter.type.legitimate">Likumīgi</option>
+    </select>
+    <select id="fChannel">
+      <option value="all" data-i18n="dashboard.filter.channel.all">Visi kanāli</option>
+      <option value="vishing" data-i18n="dashboard.filter.channel.voice">Balss zvans</option><option value="smishing" data-i18n="dashboard.filter.channel.sms">SMS / Teksts</option>
+    </select>
+    <select id="fRegion">
+      <option value="all" data-i18n="dashboard.filter.region.all">Visi reģioni</option>
+      <option value="LV (VoIP)" data-i18n="dashboard.filter.region.voip">LV (VoIP)</option>
+      <option value="LV (Mobilais)" data-i18n="dashboard.filter.region.mobile">LV (Mobilais)</option>
+      <option value="LV (Fiksētais)" data-i18n="dashboard.filter.region.fixed">LV (Fiksētais)</option>
+      <option value="LV (Īssavilkums)" data-i18n="dashboard.filter.region.shortcode">LV (Īssavilkums)</option>
+      <option value="LT (Mobilais)" data-i18n="dashboard.filter.region.lt_mobile">LT (Mobilais)</option>
+    </select>
+    <button class="btn-refresh" onclick="simulateRefresh()">
+      <svg id="refreshIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span data-i18n="dashboard.btn.refresh">Atjaunināt</span>
+    </button>
+  </div>
+
+  <!-- ── KPI Row ───────────────────────────────────────────────────────── -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.total_suspicious">Aizdomīgie gadījumi kopā</div>
+      <div class="kpi-value" id="kpi1" translate="no">—</div>
+      <div class="kpi-trend up" data-i18n="dashboard.kpi.trend.total">↑ +12% vs vakar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.high_risk">Augsta riska gadījumi</div>
+      <div class="kpi-value" id="kpi2" translate="no">—</div>
+      <div class="kpi-trend up" data-i18n="dashboard.kpi.trend.high_risk">↑ +9% vs vakar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.active_campaigns">Aktīvās kampaņas</div>
+      <div class="kpi-value" id="kpi3" translate="no">—</div>
+      <div class="kpi-trend up" data-i18n="dashboard.kpi.trend.campaigns">↑ 2 jaunas šodien</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.age_risk">Visvairāk apdraudētā vecuma gr.</div>
+      <div class="kpi-value" id="kpiAge" style="font-size:18px" translate="no">—</div>
+      <div class="kpi-sub" id="kpiAgeSub" translate="no">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.activity_peak">Aktivitātes maksimums</div>
+      <div class="kpi-value" id="kpiPeak" style="font-size:18px" translate="no">—</div>
+      <div class="kpi-sub"   id="kpiPeakSub" translate="no">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label" data-i18n="dashboard.kpi.avg_risk">Vidējais riska novērtējums</div>
+      <div class="kpi-value" id="kpi6" translate="no">—</div>
+      <div class="kpi-trend dn" data-i18n="dashboard.kpi.trend.avg_risk">↓ Augsta ticamība</div>
+    </div>
+  </div>
+
+  <!-- ── Charts row 1: Hourly + Strategies ──────────────────────────── -->
+  <div class="chart-grid">
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.hourly.title">C. Aktivitāte pēc stundas</span>
+        <span class="section-meta" data-i18n="dashboard.chart.hourly.meta">Scenāriji · visi kanāli</span>
+      </div>
+      <div class="section-body">
+        <div class="chart-canvas-wrap">
+          <svg class="line-chart" id="hourChart" viewBox="0 0 560 160" preserveAspectRatio="none"></svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;padding:0 6px" translate="no">
+          <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.strategies.title">D. Populārākās krāpniecības shēmas</span>
+        <span class="section-meta" data-i18n="dashboard.chart.strategies.meta">Pašreizējais periods · ranžēts</span>
+      </div>
+      <div class="section-body">
+        <div id="stratChart"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Charts row 2: Age + Gender ────────────────────────────────── -->
+  <div class="chart-grid">
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.age.title">A. Krāpniecības shēmas pēc vecuma grupas</span>
+        <span class="section-meta" data-i18n="dashboard.chart.age.meta">Top 4 kategorijas</span>
+      </div>
+      <div class="section-body">
+        <div class="grouped-legend" id="ageLegend"></div>
+        <div class="grouped-chart"><div class="grouped-inner" id="ageChart"></div></div>
+      </div>
+    </div>
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.gender.title">B. Krāpniecības kategorijas pēc dzimuma</span>
+        <span class="section-meta" data-i18n="dashboard.chart.gender.meta">Proporcionāls sadalījums</span>
+      </div>
+      <div class="section-body">
+        <div class="grouped-legend" id="genderLegend"></div>
+        <div class="gender-grid" id="genderChart"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Charts row 3: Keywords + Metadata ─────────────────────────── -->
+  <div class="chart-grid">
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.keywords.title">E. Atslēgvārdu / frāžu izlūkdati</span>
+        <span class="section-meta" data-i18n="dashboard.chart.keywords.meta">Izvilkts no zvanu satura · riska svērts</span>
+      </div>
+      <div class="section-body">
+        <div class="kw-grid" id="kwGrid"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
+          <span style="display:inline-block;width:9px;height:9px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:2px;margin-right:3px;vertical-align:middle"></span><span data-i18n="dashboard.legend.risk.high">Augsts risks</span> &nbsp;
+          <span style="display:inline-block;width:9px;height:9px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:2px;margin-right:3px;vertical-align:middle"></span><span data-i18n="dashboard.legend.risk.mid">Vidējs</span> &nbsp;
+          <span style="display:inline-block;width:9px;height:9px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;margin-right:3px;vertical-align:middle"></span><span data-i18n="dashboard.legend.risk.low">Zems</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-section">
+      <div class="section-head">
+        <span class="section-title" data-i18n="dashboard.chart.metadata.title">F. Metadatu ieskati</span>
+        <span class="section-meta" data-i18n="dashboard.chart.metadata.meta">Zvanītāja izcelsme · kanāls · nedēļas diena</span>
+      </div>
+      <div class="section-body">
+        <div class="meta-tiles" id="metaTiles"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Combined intelligence ──────────────────────────────────────── -->
+  <div class="dashboard-section">
+    <div class="section-head">
+      <span class="section-title" data-i18n="dashboard.section.combined.title">Kombinētie izlūkdati — metadati × satura signāli</span>
+      <span class="section-meta" data-i18n="dashboard.section.combined.meta">Automātiski ģenerēti operatīvie ieskati</span>
+    </div>
+    <div class="section-body">
+      <div class="intel-grid" id="intelGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── Alerts ────────────────────────────────────────────────────────── -->
+  <div class="dashboard-section">
+    <div class="section-head">
+      <span class="section-title" data-i18n="dashboard.section.alerts.title">Aktīvie brīdinājumi un novērošanas saraksts</span>
+      <span class="section-meta" id="alertTs" translate="no"></span>
+    </div>
+    <div class="section-body">
+      <div class="alert-list" id="alertList"></div>
+    </div>
+  </div>
+
+  <!-- ── Table ──────────────────────────────────────────────────────────── -->
+  <div class="dashboard-section">
+    <div class="section-head">
+      <span class="section-title" data-i18n="dashboard.section.table.title">Apkopotie krāpniecības paraugu ieraksti</span>
+      <span class="section-meta" data-i18n="dashboard.section.table.meta">Visi kanāli · pašreizējais periods</span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th data-i18n="dashboard.table.type">Krāpniecības veids</th>
+              <th data-i18n="dashboard.table.segment">Mērķa segments</th>
+              <th data-i18n="dashboard.table.phrases">Galvenās frāzes</th>
+              <th data-i18n="dashboard.table.peak">Aktivitātes maksimums</th>
+              <th data-i18n="dashboard.table.risk">Riska līmenis</th>
+              <th data-i18n="dashboard.table.delta">Nedēļas Δ</th>
+              <th data-i18n="dashboard.table.status">Statuss</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/product-shell.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

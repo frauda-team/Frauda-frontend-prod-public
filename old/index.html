@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Frauda — Ziņojumu pārbaudes rīks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ─── Navbar ─── -->
+<header class="navbar">
+  <div class="navbar-left">
+    <img src="assets/logo.jpg" class="navbar-logo" alt="Frauda logo" translate="no">
+    <span class="navbar-brand" translate="no">Frauda</span>
+    <div class="navbar-divider"></div>
+    <span class="navbar-subtitle" data-i18n="index.nav.subtitle">Iekšējais pārbaudes rīks</span>
+  </div>
+  <div class="navbar-right">
+    <a href="dashboard.html" class="nav-page-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span data-i18n="index.nav.link.dashboard">Datu panelis</span>
+    </a>
+    <div class="api-status">
+      <div class="api-dot"></div>
+      <span data-i18n="common.api.connected">API savienots</span>
+    </div>
+    <button id="btnLang" class="lang-btn" onclick="toggleLang()">EN</button>
+    <button id="btnTheme" class="theme-btn" type="button">
+      <span class="theme-icon" id="themeIcon" aria-hidden="true">◐</span>
+      <span data-i18n="common.theme.toggle">Tēma</span>
+    </button>
+    <button id="btnLogout" class="btn btn-ghost nav-logout" type="button" data-i18n="common.auth.logout">Izrakstīties</button>
+    <span class="navbar-user" id="navbarUser" translate="no">guest</span>
+  </div>
+</header>
+
+<!-- ─── Main ─── -->
+<main class="main">
+
+  <div class="page-header">
+    <div class="page-title" data-i18n="index.page.title">Krāpniecisko ziņojumu analīze</div>
+    <div class="page-desc" data-i18n="index.page.desc">Iesniedziet teksta vai balss ziņojuma paraugu automatizētai krāpniecības noteikšanai. Rezultāti ietver riska novērtējumu, metadatus, transkriptu un galvenos indikatorus.</div>
+  </div>
+
+  <!-- ─── Analysis Flow ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.section.flow">Analīzes plūsma</span>
+    </div>
+    <div class="section-body">
+      <div class="process-flow" id="processFlow">
+        <div class="process-step">
+          <div class="step-icon" id="step1Icon">1</div>
+          <div class="step-label" id="step1Label" data-i18n="index.flow.input">Ievade</div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon" id="step2Icon">2</div>
+          <div class="step-label" id="step2Label" data-i18n="index.flow.preprocess">Priekšapstrāde</div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon" id="step3Icon">3</div>
+          <div class="step-label" id="step3Label" data-i18n="index.flow.nlp">NLP skenēšana</div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon" id="step4Icon">4</div>
+          <div class="step-label" id="step4Label" data-i18n="index.flow.pattern">Paraugu atpazīšana</div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon" id="step5Icon">5</div>
+          <div class="step-label" id="step5Label" data-i18n="index.flow.scoring">Vērtēšana</div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon" id="step6Icon">6</div>
+          <div class="step-label" id="step6Label" data-i18n="index.flow.result">Rezultāts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Request Details (schema-first) ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.section.request">Pieteikuma dati</span>
+    </div>
+    <div class="section-body">
+      <form id="requestForm" class="request-form" novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="reqFullName" data-i18n="index.form.full_name.label">Pilns vārds</label>
+            <input id="reqFullName" type="text" data-i18n-placeholder="index.form.full_name.placeholder" placeholder="Piemēram, Anna Bērziņa" />
+            <div class="field-help" data-i18n="index.form.full_name.help">Nepieciešams identifikācijai pārskatā.</div>
+            <div class="field-error" id="errReqFullName"></div>
+          </div>
+          <div class="form-field">
+            <label for="reqEmail" data-i18n="index.form.email.label">E-pasts</label>
+            <input id="reqEmail" type="email" data-i18n-placeholder="index.form.email.placeholder" placeholder="anna@example.com" />
+            <div class="field-help" data-i18n="index.form.email.help">Izmantojam paziņojumu simulācijai.</div>
+            <div class="field-error" id="errReqEmail"></div>
+          </div>
+          <div class="form-field">
+            <label for="reqPhone" data-i18n="index.form.phone.label">Tālrunis</label>
+            <input id="reqPhone" type="tel" data-i18n-placeholder="index.form.phone.placeholder" placeholder="+37120000000" />
+            <div class="field-help" data-i18n="index.form.phone.help">Atļauti cipari un '+' prefikss.</div>
+            <div class="field-error" id="errReqPhone"></div>
+          </div>
+          <div class="form-field">
+            <label for="reqAge" data-i18n="index.form.age.label">Vecums</label>
+            <input id="reqAge" type="number" min="18" max="100" data-i18n-placeholder="index.form.age.placeholder" placeholder="35" />
+            <div class="field-help" data-i18n="index.form.age.help">Vecumam jābūt 18–100 robežās.</div>
+            <div class="field-error" id="errReqAge"></div>
+          </div>
+          <div class="form-field">
+            <label for="reqChannel" data-i18n="index.form.channel.label">Vēlamais saziņas kanāls</label>
+            <select id="reqChannel">
+              <option value="" data-i18n="index.form.channel.placeholder">Izvēlieties kanālu</option>
+              <option value="email" data-i18n="index.form.channel.email">E-pasts</option>
+              <option value="phone" data-i18n="index.form.channel.phone">Tālrunis</option>
+              <option value="sms" data-i18n="index.form.channel.sms">SMS</option>
+            </select>
+            <div class="field-help" data-i18n="index.form.channel.help">Nepieciešams turpmākai saziņas plūsmai.</div>
+            <div class="field-error" id="errReqChannel"></div>
+          </div>
+          <div class="form-field form-field-wide">
+            <label for="reqContext" data-i18n="index.form.context.label">Situācijas apraksts</label>
+            <textarea id="reqContext" rows="3" data-i18n-placeholder="index.form.context.placeholder" placeholder="Īsi aprakstiet situāciju un galveno risku."></textarea>
+            <div class="field-help" data-i18n="index.form.context.help">Vismaz 12 rakstzīmes, lai ģenerētu kvalitatīvu pārskatu.</div>
+            <div class="field-error" id="errReqContext"></div>
+          </div>
+        </div>
+      </form>
+      <div class="inline-error" id="actionError"></div>
+    </div>
+  </div>
+
+  <!-- ─── Submit Sample ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.section.submit">Iesniegt paraugu</span>
+    </div>
+    <div class="section-body">
+      <div class="input-area">
+        <button class="btn btn-primary" id="btnText" onclick="addSample('text')" data-i18n-title="index.title.loading_data" title="Dati tiek ielādēti…">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span data-i18n="index.btn.add_text">Pievienot teksta ziņojumu</span>
+        </button>
+        <button class="btn btn-secondary" id="btnVoice" onclick="addSample('voice')" data-i18n-title="index.title.loading_data" title="Dati tiek ielādēti…">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span data-i18n="index.btn.add_voice">Pievienot balss ziņojumu</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-area" id="loadingArea">
+      <div class="loading-header">
+        <span class="loading-label" id="loadingLabel" data-i18n="index.loading.default">Analizē ziņojumu…</span>
+        <span class="loading-pct" id="loadingPct" translate="no">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="loading-steps">
+        <div class="loading-step" id="ls1"><div class="loading-step-dot"></div><span data-i18n="index.loading.step1">Saņem un priekšapstrādā ievadi</span></div>
+        <div class="loading-step" id="ls2"><div class="loading-step-dot"></div><span data-i18n="index.loading.step2">Veic NLP tokenizāciju un entitāšu izvilkšanu</span></div>
+        <div class="loading-step" id="ls3"><div class="loading-step-dot"></div><span data-i18n="index.loading.step3">Salīdzina ar krāpniecības paraugu bibliotēku</span></div>
+        <div class="loading-step" id="ls4"><div class="loading-step-dot"></div><span data-i18n="index.loading.step4">Aprēķina riska novērtējumu un indikatorus</span></div>
+        <div class="loading-step" id="ls5"><div class="loading-step-dot"></div><span data-i18n="index.loading.step5">Ģenerē noteikšanas rezultātu</span></div>
+      </div>
+    </div>
+
+    <div class="awaiting-area" id="awaitingArea">
+      <span data-i18n="index.awaiting">Nav iesniegts neviens paraugs. Nospiediet "Pievienot teksta ziņojumu" vai "Pievienot balss ziņojumu", lai sāktu.</span>
+    </div>
+  </div>
+
+  <!-- ─── User Scam Submission (scenarios_test) ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.section.user_submission">Lietotāja ziņojums testēšanai</span>
+    </div>
+    <div class="section-body">
+      <form id="userSubmissionForm" class="request-form" novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="subType" data-i18n="index.submission.type.label">Ziņojuma tips</label>
+            <select id="subType">
+              <option value="text" data-i18n="index.submission.type.text">Teksta ziņojums</option>
+              <option value="voice" data-i18n="index.submission.type.voice">Balss ziņojums (mp4)</option>
+            </select>
+            <div class="field-help" data-i18n="index.submission.type.help">Dati tiks saglabāti atsevišķā `scenarios_test` glabātuvē.</div>
+          </div>
+          <div class="form-field form-field-wide" id="subTextWrap">
+            <label for="subText" data-i18n="index.submission.text.label">Ziņojuma saturs</label>
+            <textarea id="subText" rows="3" data-i18n-placeholder="index.submission.text.placeholder" placeholder="Ievadiet aizdomīgā teksta saturu..."></textarea>
+            <div class="field-error" id="errSubText"></div>
+          </div>
+          <div class="form-field" id="subVoiceWrap" style="display:none;">
+            <label for="subVoiceFile" data-i18n="index.submission.voice.label">MP4 faila nosaukums</label>
+            <input id="subVoiceFile" type="text" data-i18n-placeholder="index.submission.voice.placeholder" placeholder="call_001.mp4" />
+            <div class="field-help" data-i18n="index.submission.voice.help">Saglabājam tikai faila nosaukumu, nevis faila saturu.</div>
+            <div class="field-error" id="errSubVoiceFile"></div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="btnSaveSubmission" type="submit" class="btn btn-primary" data-i18n="index.submission.save">Saglabāt ziņojumu</button>
+        </div>
+        <div class="inline-success" id="submissionSuccess"></div>
+        <div class="inline-error" id="submissionError"></div>
+      </form>
+      <div class="state-card" id="submissionListEmpty">
+        <strong data-i18n="index.submission.empty.title">Nav lietotāja ziņojumu</strong>
+        <span data-i18n="index.submission.empty.desc">Pievienojiet pirmo testēšanas ziņojumu, lai pārbaudītu saglabāšanu.</span>
+      </div>
+      <div class="report-list" id="submissionList"></div>
+    </div>
+  </div>
+
+  <!-- ─── Detection Result ─── -->
+  <div class="section result-area" id="resultArea">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.result.title">Noteikšanas rezultāts</span>
+      <span id="caseTypeBadge" style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;"></span>
+    </div>
+
+    <div class="score-row">
+      <div class="score-gauge">
+        <div class="score-number" id="scoreNumber" translate="no">—</div>
+        <div class="score-unit" data-i18n="index.score.unit">Riska novērtējums</div>
+      </div>
+      <div>
+        <div class="risk-badge" id="riskBadge">—</div>
+        <div style="margin-top:8px;"></div>
+      </div>
+      <div class="score-meta">
+        <div class="score-summary" id="scoreSummary">—</div>
+        <div class="score-note"    id="scoreNote"    translate="no">—</div>
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.type">Tips</div><div class="meta-value" id="metaType">—</div></div>
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.duration">Ilgums / Garums</div><div class="meta-value" id="metaDuration">—</div></div>
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.caller">Zvanītāja numurs</div><div class="meta-value" id="metaCaller" translate="no">—</div></div>
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.origin">Izcelsme</div><div class="meta-value" id="metaOrigin" translate="no">—</div></div>
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.language">Valoda</div><div class="meta-value" id="metaLang">—</div></div>
+      <div class="meta-card"><div class="meta-label" data-i18n="index.meta.analyzed">Analizēts</div><div class="meta-value" id="metaTime" translate="no">—</div></div>
+    </div>
+
+    <div class="transcript-header">
+      <span class="transcript-label" id="transcriptLabel" data-i18n="index.transcript.default">Transkripts</span>
+    </div>
+    <div class="transcript-body" id="transcriptBody"></div>
+
+    <div class="section-header" style="border-top:1px solid var(--border-light);">
+      <span class="section-title" data-i18n="index.section.indicators">Galvenie indikatori</span>
+    </div>
+    <div class="indicators-list" id="indicatorsList"></div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#16a34a;"></div><span data-i18n="index.legend.low">Visticamāk nav krāpniecība (0–35)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d97706;"></div><span data-i18n="index.legend.mid">Neskaidrs (36–65)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#b91c1c;"></div><span data-i18n="index.legend.high">Visticamāk krāpniecība (66–100)</span></div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn btn-secondary" id="btnCopy" onclick="copyTranscript()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span data-i18n="index.btn.copy">Kopēt transkriptu</span>
+      </button>
+      <span class="copy-success" id="copySuccess" data-i18n="index.copy.success">Nokopēts starpliktuvē</span>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="resetTool()" data-i18n="index.btn.reset">Veikt vēl vienu pārbaudi</button>
+    </div>
+  </div>
+
+  <!-- ─── Report History ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title" data-i18n="index.section.report_history">Pārskatu vēsture</span>
+      <div class="history-filter">
+        <label for="reportFilter" data-i18n="index.report.filter.label">Statuss</label>
+        <select id="reportFilter">
+          <option value="all" data-i18n="index.report.filter.all">Visi</option>
+          <option value="in work" data-i18n="index.report.filter.in_work">In work</option>
+          <option value="success" data-i18n="index.report.filter.success">Success</option>
+          <option value="fail" data-i18n="index.report.filter.fail">Fail</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="state-card" id="reportAuthGate">
+        <strong data-i18n="index.report.auth.title">Vēsture ir aizsargāta</strong>
+        <span data-i18n="index.report.auth.desc">Piesakieties, lai skatītu savus pārskatus.</span>
+        <button class="btn btn-secondary" id="btnHistoryLogin" type="button" data-i18n="index.report.auth.cta">Pieteikties</button>
+      </div>
+      <div class="state-card" id="reportHistoryEmpty">
+        <strong data-i18n="index.report.empty.title">Pārskatu vēl nav</strong>
+        <span data-i18n="index.report.empty.desc">Iesniedziet pirmo pieprasījumu, lai izveidotu pārskatu.</span>
+      </div>
+      <div class="report-list" id="reportHistoryList"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── Shared overlays ─── -->
+<div class="overlay" id="onboardingOverlay" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+  <div class="modal-card welcome-card">
+    <h2 id="onboardingTitle" data-i18n="onboarding.title">Laipni lūdzam Frauda</h2>
+    <p data-i18n="onboarding.desc">Šis rīks palīdz analizēt aizdomīgus ziņojumus, novērtēt risku un uzturēt vietējo pārskatu vēsturi.</p>
+    <button id="btnOnboardingStart" class="btn btn-primary" type="button" data-i18n="onboarding.cta">Sākt darbu</button>
+  </div>
+</div>
+
+<div class="overlay" id="authOverlay" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="modal-card auth-card">
+    <h2 id="authTitle" data-i18n="auth.title">Pieteikšanās</h2>
+    <p class="modal-sub" id="authMessage" data-i18n="auth.default_message">Ievadiet testa piekļuves datus, lai turpinātu.</p>
+    <form id="authForm" novalidate>
+      <div class="form-field">
+        <label for="authUsername" data-i18n="auth.username">Lietotājvārds</label>
+        <input id="authUsername" type="text" autocomplete="username" />
+      </div>
+      <div class="form-field">
+        <label for="authPassword" data-i18n="auth.password">Parole</label>
+        <input id="authPassword" type="password" autocomplete="current-password" />
+      </div>
+      <div class="inline-error" id="authError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnAuthCancel" data-i18n="auth.cancel">Atcelt</button>
+        <button type="submit" class="btn btn-primary" id="btnAuthSubmit" data-i18n="auth.submit">Pieteikties</button>
+      </div>
+      <div class="credentials-hint" translate="no">test / test</div>
+    </form>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/product-shell.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
